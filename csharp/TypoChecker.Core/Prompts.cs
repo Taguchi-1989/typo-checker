@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace TypoChecker.Core;
 
 /// <summary>§8.4 プロンプト（Python版 app/prompts.py の移植・プロンプトv2反映済み）。</summary>
@@ -45,5 +47,29 @@ public static class Prompts
         };
 
     public static string BuildPrompt(CorrectionMode mode, string text) =>
-        DefaultInstructions[mode] + "\n\n入力文:\n" + text;
+        BuildPrompt(mode, text, null);
+
+    /// <summary>Corpus 用例（§9.1 方式A）を few-shot として注入してプロンプトを組み立てる。</summary>
+    public static string BuildPrompt(CorrectionMode mode, string text, IEnumerable<CorpusItem>? fewshot)
+    {
+        var sb = new StringBuilder(DefaultInstructions[mode]);
+
+        var examples = fewshot?
+            .Where(e => !string.IsNullOrWhiteSpace(e.AcceptedText))
+            .ToList();
+        if (examples is { Count: > 0 })
+        {
+            sb.Append("\n\n参考例（出力スタイルの参考のみ。内容・固有名詞は流用しない）:");
+            foreach (var e in examples)
+            {
+                if (!string.IsNullOrWhiteSpace(e.SourceText))
+                    sb.Append($"\n入力: {e.SourceText.Trim()}\n出力: {e.AcceptedText.Trim()}");
+                else
+                    sb.Append($"\n良い文例: {e.AcceptedText.Trim()}");
+            }
+        }
+
+        sb.Append("\n\n入力文:\n").Append(text);
+        return sb.ToString();
+    }
 }

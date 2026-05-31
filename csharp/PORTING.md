@@ -47,12 +47,13 @@ echo 雑なメモ | dotnet run --project TypoChecker.Cli -- business
 | app/tray.py | NotifyIcon（WinForms相互運用 or Win32） | ⏳ 未 |
 | app/result_window.py | WPF ResultWindow.xaml | ⏳ 未 |
 | app/settings_window.py | WPF SettingsWindow.xaml | ⏳ 未 |
-| app/backend.py | App + JobService（DispatcherでUIへ） | ⏳ 未 |
+| app/backend.py | JobService.cs(コア) + App(UI) | 🟡 コア移植済(JobService)・UIは未 |
 
 ## 移植ロードマップ
 
 1. ✅ 純ロジック（Sanitizer/Prompts/OllamaClient/Models）＋テスト
 2. ✅ AppSettings（JSON, System.Text.Json）/ CorpusStore ＋テスト
+2.5 ✅ JobService（検証→プロンプト(+Corpus)→Ollama→サニタイズ、並列制限）＋テスト（IOllamaClientで注入可能）
 3. ⏳ グローバルホットキー（Win32 `RegisterHotKey` ＋ メッセージループ。AHK代替）
 4. ⏳ 非破壊キャプチャ（SendInput Ctrl+C ＋ クリップボード退避/復元、§7.2 反映待ち）
 5. ⏳ WPF GUI（結果ウィンドウ 原文/生成文 並列、設定画面、処理中インジケータ）

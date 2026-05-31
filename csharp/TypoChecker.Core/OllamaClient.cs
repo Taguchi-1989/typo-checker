@@ -3,8 +3,16 @@ using System.Text.Json;
 
 namespace TypoChecker.Core;
 
+/// <summary>LLM クライアントの抽象（テスト時にスタブを注入できるように）。</summary>
+public interface IOllamaClient
+{
+    Task<string> GenerateAsync(string model, string prompt, double temperature,
+        bool? think = false, CancellationToken ct = default);
+    Task<bool> CheckConnectionAsync(CancellationToken ct = default);
+}
+
 /// <summary>Ollama クライアント（Python版 app/llm.py の移植）。think 制御対応。</summary>
-public class OllamaClient
+public class OllamaClient : IOllamaClient
 {
     private readonly HttpClient _http;
     private readonly string _endpoint;

@@ -21,7 +21,7 @@ from app import notify as notify_mod  # noqa: E402
 RESPONSE = "はい、補正後の本文です。"
 
 
-def start_fake_ollama(port, fail=False):
+def start_fake_ollama(port, fail=False, delay=0.0):
     class H(BaseHTTPRequestHandler):
         def log_message(self, *a):
             pass
@@ -40,6 +40,8 @@ def start_fake_ollama(port, fail=False):
         def do_POST(self):
             length = int(self.headers.get("Content-Length", 0))
             self.rfile.read(length)
+            if delay:
+                time.sleep(delay)
             if fail:
                 self._json(500, {"error": "boom"})
             else:
@@ -98,7 +100,7 @@ def scenario_max_chars():
         submit(8811, "typo", "あ" * 50)  # 上限超過
         pump(be, 0.5)
         assert not be._result_windows, "超過時に結果ウィンドウが出てはいけない"
-        assert be._active_jobs == 0
+        assert be._running == 0 and not be._pending
         titles = [t for t, _ in be._notes]
         assert any("文字数超過" in t for t in titles), be._notes
         print("OK max_chars 拒否")
@@ -166,11 +168,36 @@ def scenario_copy_off():
         be._quit(); fake.shutdown()
 
 
+def scenario_parallel_and_history():
+    # 遅延付き偽Ollama + 並列上限1 で、3件投入してキュー待ち→順次完了→履歴3件
+    fake = start_fake_ollama(12005, delay=0.6)
+    be = build_backend({"llm.max_parallel": 1,
+                        "history.enabled": True, "history.max_items": 10},
+                       8815, 12005)
+    try:
+        pump(be, 0.2)
+        for i in range(3):
+            submit(8815, "typo", f"テスト文{i}")
+        pump(be, 0.3)
+        # 上限1なので実行は1件、残りは待機
+        assert be._running <= 1, be._running
+        assert len(be._pending) >= 1, "キュー待ちが発生していない"
+        # 全件完了まで待つ
+        pump(be, 3.0)
+        assert be._running == 0 and not be._pending, (be._running, len(be._pending))
+        assert len(be._result_windows) == 3, len(be._result_windows)
+        assert len(be._history) == 3, len(be._history)
+        print("OK 並列上限1→キュー待ち→順次完了/履歴3件")
+    finally:
+        be._quit(); fake.shutdown()
+
+
 SCENARIOS = {
     "max_chars": scenario_max_chars,
     "empty": scenario_empty,
     "fail": scenario_llm_failure_and_accept_guard,
     "copy_off": scenario_copy_off,
+    "parallel_history": scenario_parallel_and_history,
 }
 
 

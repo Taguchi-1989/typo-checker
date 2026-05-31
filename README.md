@@ -91,10 +91,11 @@ python tests\run_all.py
 
 ## ロードマップ（仕様 §15）
 
+- ✅ **Phase 0** … 品質検証ハーネス（[run_phase0.py](run_phase0.py)）で4モデル実測、レポート作成（`results/phase0_report.md`）。既定は qwen3:8b + think:false
 - ✅ **Phase 1 MVP** … ホットキー2つ・非破壊取得・Ollama・サニタイズ・結果ウィンドウ・通知・採否Y/N
 - ✅ **Phase 2** … 設定画面・モデル切替・Corpus（few-shot / 一括インポート）
-- ⏳ **Phase 0** … 品質検証ハーネス（[run_phase0.py](run_phase0.py)）は用意済み。実評価は人手で
-- 🚧 **Phase 3+** … タスクトレイ常駐の堅牢化・履歴・並列制限、C#/.NET移植、Corpus方式B(LoRA)
+- 🚧 **Phase 3（進行中）** … ✅タスクトレイ常駐 / ✅履歴(メモリ最大10) / ✅並列実行制限 / ⏳対象外アプリのガード
+- 🔜 **Phase 4+** … C#/.NET移植、Corpus方式B(LoRA)
 
 ## プライバシー
 

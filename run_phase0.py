@@ -56,10 +56,12 @@ PROMPTS = {
         "入力文を、相手に送れる自然な依頼文として整えてください。\n\n"
         "条件:\n"
         "- 意味を変えない\n"
+        "- 肯定/否定や過不足を反転しない（例: 足りない→足りる は禁止）\n"
         "- 事実を追加しない\n"
         "- 過剰に堅くしない\n"
         "- 必要以上に長くしない\n"
         "- 依頼文として自然にする\n"
+        "- 出力は日本語のみ。他言語を混在させない\n"
         "- 出力は修正後の本文のみ\n"
         "- 解説・前置き・引用符・箇条書きは出さない\n\n"
         "入力文:\n{input}"
@@ -73,7 +75,11 @@ PROMPTS = {
         "- 丁寧語に変えない\n"
         "- 内容を要約しない\n"
         "- 事実を追加しない\n"
+        "- 肯定/否定や過不足を反転しない\n"
         "- 改行・段落構造を維持する\n"
+        "- 出力は日本語のみ。他言語を混在させない\n"
+        "- 明らかな誤変換は修正する（例: 性式→正式）\n"
+        "- 原文が壊れて意味不明な箇所は創作で補完しない\n"
         "- 出力は修正後の本文のみ\n"
         "- 解説・前置き・引用符は出さない\n\n"
         "入力文:\n{input}"
@@ -127,17 +133,20 @@ def sanitize(text: str) -> str:
 
 
 # --- Ollama 呼び出し ---------------------------------------------------------
-def call_ollama(endpoint: str, model: str, prompt: str, temperature: float) -> str:
+def call_ollama(endpoint: str, model: str, prompt: str, temperature: float,
+                think: bool = False) -> str:
     url = endpoint.rstrip("/") + "/api/generate"
     payload = {
         "model": model,
         "prompt": prompt,
         "stream": False,
+        # 思考モデル(Qwen3等)は think=false で大幅高速化。非思考モデルでは無害。
+        "think": think,
         "options": {"temperature": temperature},
     }
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=120) as resp:
+    with urllib.request.urlopen(req, timeout=180) as resp:
         body = json.loads(resp.read().decode("utf-8"))
     return body.get("response", "")
 
@@ -152,12 +161,15 @@ def run_generation(model: str, endpoint: str):
     total = sum(len(data[m]) for m in ("typo", "business"))
     done = 0
 
+    import time
+    elapsed_list = []
     for mode in ("typo", "business"):
         for item in data[mode]:
             done += 1
             src = item["text"]
             prompt = PROMPTS[mode].format(input=src)
             print(f"[{done}/{total}] {item['id']} ({mode}) 生成中...", file=sys.stderr)
+            t0 = time.time()
             try:
                 raw = call_ollama(endpoint, model, prompt, TEMPERATURE[mode])
                 clean = sanitize(raw)
@@ -165,6 +177,9 @@ def run_generation(model: str, endpoint: str):
             except Exception as e:  # noqa: BLE001
                 raw, clean, err = "", "", str(e)
                 print(f"  -> 失敗: {e}", file=sys.stderr)
+            elapsed = round(time.time() - t0, 2)
+            if err is None:
+                elapsed_list.append(elapsed)
 
             records.append({
                 "id": item["id"],
@@ -174,6 +189,7 @@ def run_generation(model: str, endpoint: str):
                 "raw_output": raw,
                 "result_text": clean,
                 "preamble_stripped": raw.strip() != clean and clean != "",
+                "elapsed_sec": elapsed,
                 "error": err,
                 "accepted": None,   # §18.3 Y/N（judge で埋める）
                 "note": "",
@@ -182,9 +198,12 @@ def run_generation(model: str, endpoint: str):
     ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     safe_model = re.sub(r"[^A-Za-z0-9._-]", "_", model)
     out_path = os.path.join(RESULTS_DIR, f"gen_{safe_model}_{ts}.json")
+    avg = round(sum(elapsed_list) / len(elapsed_list), 2) if elapsed_list else None
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump({"model": model, "generated_at": ts, "records": records}, f,
+        json.dump({"model": model, "generated_at": ts,
+                   "avg_elapsed_sec": avg, "records": records}, f,
                   ensure_ascii=False, indent=2)
+    print(f"\n平均生成時間: {avg} 秒/件", file=sys.stderr)
 
     print(f"\n生成完了: {out_path}", file=sys.stderr)
     print(f"判定するには: python run_phase0.py --judge {out_path}", file=sys.stderr)

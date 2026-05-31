@@ -1,7 +1,9 @@
 # ユーザー固有・生成ファイル（公開しない）
 settings.json
 corpus.json
-results/
+# 生成結果は除外。ただし Phase 0 レポートは追跡する
+results/*
+!results/phase0_report.md
 
 # Python
 __pycache__/

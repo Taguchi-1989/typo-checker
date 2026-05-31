@@ -30,10 +30,13 @@ DEFAULT_SETTINGS = {
         "provider": "ollama",
         "endpoint": "http://localhost:11434",
         "model": "qwen3:8b",
-        "temperature": {"business": 0.4, "typo": 0.2},
+        # Phase 0 検証で business は 0.4→0.3 に下げて意味反転(B09等)を抑制
+        "temperature": {"business": 0.3, "typo": 0.2},
         "timeout_sec": 120,
         # 思考モデル(Qwen3等)の thinking 制御。false で高速化（typo: 41s→6s）
         "think": False,
+        # 並列実行数の上限（§Phase 3）。超過分はキュー待ち
+        "max_parallel": 2,
     },
     "clipboard": {
         "copy_result_on_complete": True,
@@ -49,7 +52,7 @@ DEFAULT_SETTINGS = {
     # プロンプト上書き（空なら prompts.DEFAULT_INSTRUCTIONS を使用）
     "prompts": {"business": "", "typo": ""},
     "corpus": {"enabled": False, "max_items": 200, "fewshot_count": 3, "encrypt": False},
-    "history": {"enabled": False, "max_items": 10},
+    "history": {"enabled": True, "max_items": 10},
     "max_chars": 3000,
 }
 

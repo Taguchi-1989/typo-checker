@@ -24,6 +24,12 @@ CAPTURE_TIMEOUT := 1.0   ; §7.2 反映待ちタイムアウト（秒）
 CaptureAndSend(mode) {
     global SERVER_URL, CAPTURE_TIMEOUT
 
+    ; 0) パスワード欄など機微な入力欄では動作しない（§11.2 安全性）
+    if IsSecureField() {
+        TrayTip("スキップ", "セキュア入力欄では補正を実行しません", 1)
+        return
+    }
+
     ; 1) 現在のクリップボードを退避（バイナリ含む全体）
     saved := ClipboardAll()
 
@@ -53,6 +59,21 @@ CaptureAndSend(mode) {
     title := WinGetTitle("A")
     if !PostJob(mode, text, title)
         TrayTip("送信失敗", "バックエンド(run_app.py)が起動しているか確認してください", 3)
+}
+
+; フォーカス中のコントロールがパスワード欄(ES_PASSWORD)かどうか判定。
+; 取得失敗時は false（=通常動作）にフォールバック。ブラウザ内のパスワード欄は
+; OSコントロールでないため検出対象外（仕様上もセキュア欄は対象外 §3.2）。
+IsSecureField() {
+    static ES_PASSWORD := 0x20
+    try {
+        hCtl := ControlGetFocus("A")
+        if !hCtl
+            return false
+        return (ControlGetStyle(hCtl) & ES_PASSWORD) != 0
+    } catch {
+        return false
+    }
 }
 
 PostJob(mode, text, windowTitle) {

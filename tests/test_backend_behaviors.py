@@ -21,7 +21,7 @@ from app import notify as notify_mod  # noqa: E402
 RESPONSE = "はい、補正後の本文です。"
 
 
-def start_fake_ollama(port, fail=False, delay=0.0):
+def start_fake_ollama(port, fail=False, delay=0.0, sink=None):
     class H(BaseHTTPRequestHandler):
         def log_message(self, *a):
             pass
@@ -39,7 +39,12 @@ def start_fake_ollama(port, fail=False, delay=0.0):
 
         def do_POST(self):
             length = int(self.headers.get("Content-Length", 0))
-            self.rfile.read(length)
+            raw = self.rfile.read(length) if length else b"{}"
+            if sink is not None:
+                try:
+                    sink.append(json.loads(raw.decode("utf-8")))
+                except ValueError:
+                    pass
             if delay:
                 time.sleep(delay)
             if fail:
@@ -192,12 +197,59 @@ def scenario_parallel_and_history():
         be._quit(); fake.shutdown()
 
 
+def scenario_think_forwarded():
+    # 既定(think=false)が Ollama リクエストへ転送されるか
+    sink = []
+    fake = start_fake_ollama(12006, sink=sink)
+    be = build_backend({}, 8816, 12006)
+    try:
+        pump(be, 0.2)
+        submit(8816, "typo", "テスト文")
+        pump(be, 2.0)
+        assert sink, "リクエストが届いていない"
+        assert sink[-1].get("think") is False, sink[-1]
+        print("OK think:false がOllamaへ転送される")
+    finally:
+        be._quit(); fake.shutdown()
+
+
+def scenario_corpus_accept():
+    # 採用Y(done) → Corpus追加 / 失敗ジョブ採用 → 追加されない
+    from app import config as _cfg
+    from app.jobs import Job
+    if os.path.exists(_cfg.CORPUS_PATH):
+        os.remove(_cfg.CORPUS_PATH)
+    fake = start_fake_ollama(12007)
+    be = build_backend({"corpus.enabled": True}, 8817, 12007)
+    try:
+        pump(be, 0.2)
+        submit(8817, "business", "雑なメモ")
+        pump(be, 2.0)
+        win = next(iter(be._result_windows.values()))
+        assert win.job.status == "done"
+        before = len(be.corpus.list())
+        be._on_accept(win.job, True, "丁寧な確定文です。")
+        assert len(be.corpus.list()) == before + 1, "採用がCorpusに反映されない"
+        # 失敗ジョブを採用してもCorpusは増えない（誤学習防止）
+        after = len(be.corpus.list())
+        failed = Job("typo", "x"); failed.status = "failed"
+        be._on_accept(failed, True, "[生成失敗] err")
+        assert len(be.corpus.list()) == after, "失敗ジョブがCorpusへ混入"
+        print("OK 採用Y→Corpus追加（失敗ジョブは除外）")
+    finally:
+        be._quit(); fake.shutdown()
+        if os.path.exists(_cfg.CORPUS_PATH):
+            os.remove(_cfg.CORPUS_PATH)
+
+
 SCENARIOS = {
     "max_chars": scenario_max_chars,
     "empty": scenario_empty,
     "fail": scenario_llm_failure_and_accept_guard,
     "copy_off": scenario_copy_off,
     "parallel_history": scenario_parallel_and_history,
+    "think_forwarded": scenario_think_forwarded,
+    "corpus_accept": scenario_corpus_accept,
 }
 
 

@@ -11,6 +11,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # 各モジュールは別プロセスで実行（tkinter は 1プロセス1インタプリタに限定するため）
 MODULES = [
     "test_sanitize",
+    "test_jobs",
     "test_config",
     "test_prompts_corpus",
     "test_integration",

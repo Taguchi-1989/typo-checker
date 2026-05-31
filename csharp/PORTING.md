@@ -24,9 +24,13 @@ csharp/
 
 ```
 cd csharp
-dotnet test TypoChecker.Tests/TypoChecker.Tests.csproj      # サニタイズ回帰
+dotnet test TypoChecker.Tests/TypoChecker.Tests.csproj      # 19テスト
 dotnet run --project TypoChecker.Cli -- typo "なおしたいテキスト"
 echo 雑なメモ | dotnet run --project TypoChecker.Cli -- business
+
+# ホットキー常駐デーモン（Ctrl+Alt+B/T）。※AHK版が動いているとホットキー競合で登録失敗するので先に停止
+dotnet run --project TypoChecker.Daemon
+dotnet run --project TypoChecker.Daemon -- selftest          # クリップボード往復の自己テスト
 ```
 
 > 検証済み: .NET 8.0.421 で `dotnet test` 15件緑、CLI は実 Ollama(qwen3:8b) で動作確認。
@@ -41,9 +45,9 @@ echo 雑なメモ | dotnet run --project TypoChecker.Cli -- business
 | app/jobs.py | TypoChecker.Core/Models.cs (Job) | ✅ 移植 |
 | app/config.py | TypoChecker.Core/AppSettings.cs | ✅ 移植 |
 | app/corpus.py | TypoChecker.Core/CorpusStore.cs | ✅ 移植 |
-| app/clipboard.py | Win32 Clipboard / System.Windows.Clipboard | ⏳ 未 |
+| app/clipboard.py | TypoChecker.Daemon/Native.cs (Win32 Clipboard) | ✅ 移植(往復確認済) |
 | app/notify.py | Windows トースト（CommunityToolkit等） | ⏳ 未 |
-| ahk/hotkeys.ahk | グローバルホットキー（RegisterHotKey/Win32） | ⏳ 未 |
+| ahk/hotkeys.ahk | TypoChecker.Daemon/HotkeyLoop.cs + SelectionCapturer.cs | ✅ 移植(要実機での実押下確認) |
 | app/tray.py | NotifyIcon（WinForms相互運用 or Win32） | ⏳ 未 |
 | app/result_window.py | WPF ResultWindow.xaml | ⏳ 未 |
 | app/settings_window.py | WPF SettingsWindow.xaml | ⏳ 未 |
@@ -54,8 +58,9 @@ echo 雑なメモ | dotnet run --project TypoChecker.Cli -- business
 1. ✅ 純ロジック（Sanitizer/Prompts/OllamaClient/Models）＋テスト
 2. ✅ AppSettings（JSON, System.Text.Json）/ CorpusStore ＋テスト
 2.5 ✅ JobService（検証→プロンプト(+Corpus)→Ollama→サニタイズ、並列制限）＋テスト（IOllamaClientで注入可能）
-3. ⏳ グローバルホットキー（Win32 `RegisterHotKey` ＋ メッセージループ。AHK代替）
-4. ⏳ 非破壊キャプチャ（SendInput Ctrl+C ＋ クリップボード退避/復元、§7.2 反映待ち）
+3. ✅ グローバルホットキー（Win32 `RegisterHotKey`＋GetMessageループ）＝ TypoChecker.Daemon
+4. ✅ 非破壊キャプチャ（SendInput Ctrl+C ＋ クリップボード退避/復元/反映待ち §7.2）
+   ※ 3・4 はビルド＆クリップボード往復確認済み。実押下の動作確認は実機で。
 5. ⏳ WPF GUI（結果ウィンドウ 原文/生成文 並列、設定画面、処理中インジケータ）
 6. ⏳ トレイ常駐（NotifyIcon）/ 通知 / 履歴
 7. ⏳ パッケージング（single-file publish, インストーラ）

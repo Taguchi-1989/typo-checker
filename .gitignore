@@ -1,0 +1,21 @@
+# ユーザー固有・生成ファイル（公開しない）
+settings.json
+corpus.json
+results/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# テスト一時ファイル
+tests/_tmp_*.json
+
+# OS / エディタ
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+*.lnk

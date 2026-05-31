@@ -1,0 +1,14 @@
+<Window x:Class="TypoChecker.WpfApp.HistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="履歴（メモリのみ・終了で破棄）" Height="380" Width="560">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <ListBox x:Name="LstHistory" MouseDoubleClick="OnReopen"/>
+        <Button Grid.Row="1" Content="選択した結果を再表示" Click="OnReopen"
+                HorizontalAlignment="Right" Padding="12,4" Margin="0,8,0,0"/>
+    </Grid>
+</Window>

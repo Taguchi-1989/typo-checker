@@ -8,12 +8,14 @@ public partial class MainWindow : Window
 {
     private OllamaClient _client;
     private readonly Action _onOpenSettings;
+    private readonly Action _onOpenHistory;
 
-    public MainWindow(AppSettings settings, OllamaClient client, Action onOpenSettings)
+    public MainWindow(AppSettings settings, OllamaClient client, Action onOpenSettings, Action onOpenHistory)
     {
         InitializeComponent();
         _client = client;
         _onOpenSettings = onOpenSettings;
+        _onOpenHistory = onOpenHistory;
         LblModel.Text = $"モデル: {settings.Llm.Model}";
         Loaded += async (_, _) => await RefreshConnAsync();
     }
@@ -29,6 +31,8 @@ public partial class MainWindow : Window
     }
 
     private void OnSettings(object sender, RoutedEventArgs e) => _onOpenSettings();
+
+    private void OnHistory(object sender, RoutedEventArgs e) => _onOpenHistory();
 
     private async Task RefreshConnAsync()
     {

@@ -16,6 +16,8 @@ public partial class App : Application
     private MainWindow _main = null!;
     private TrayIcon _tray = null!;
     private bool _enabled = true;
+    private readonly ProcessingIndicator _indicator = new();
+    private readonly List<Job> _history = new();
 
     private void OnStartup(object sender, StartupEventArgs e)
     {
@@ -25,7 +27,7 @@ public partial class App : Application
         _corpus = new CorpusStore(Path.Combine(baseDir, "corpus.json"));
         _service = new JobService(_settings, _client, _corpus);
 
-        _main = new MainWindow(_settings, _client, OpenSettings);
+        _main = new MainWindow(_settings, _client, OpenSettings, OpenHistory);
         _main.Show();
 
         // [X] で閉じてもトレイ常駐（§6.2）
@@ -79,7 +81,12 @@ public partial class App : Application
                 return;
             }
             _main.SetStatus($"補正中… [{mode.Label()}]");
-            var job = await _service.RunAsync(mode, text!);
+            _indicator.Begin();
+            Job job;
+            try { job = await _service.RunAsync(mode, text!); }
+            finally { _indicator.End(); }
+
+            RecordHistory(job);
 
             if (job.Status == "done")
             {
@@ -92,15 +99,37 @@ public partial class App : Application
                 {
                     _main.SetStatus($"完了 [{mode.Label()}]（コピーは結果ウィンドウから）");
                 }
+                NotifyHelper.Notify("補正完了", $"{mode.Label()}の生成が完了しました。");
             }
             else
             {
                 _main.SetStatus($"失敗: {job.ErrorMessage}");
+                NotifyHelper.Notify("生成失敗", job.ErrorMessage ?? "生成に失敗しました");
             }
 
-            var win = new ResultWindow(job, TrySetClipboard, OnAccept) { Owner = null };
-            win.Show();
+            ShowResult(job);
         });
+    }
+
+    private void ShowResult(Job job) =>
+        new ResultWindow(job, TrySetClipboard, OnAccept).Show();
+
+    private void RecordHistory(Job job)
+    {
+        _history.Add(job);
+        while (_history.Count > _settings.HistoryMaxItems)
+            _history.RemoveAt(0);
+    }
+
+    private void OpenHistory()
+    {
+        if (_history.Count == 0)
+        {
+            _main.SetStatus("履歴はまだありません。");
+            return;
+        }
+        var newestFirst = Enumerable.Reverse(_history).ToList();
+        new HistoryWindow(newestFirst, ShowResult) { Owner = _main }.Show();
     }
 
     private void OnAccept(Job job, bool accepted, string finalText)

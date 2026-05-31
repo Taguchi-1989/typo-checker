@@ -3,10 +3,11 @@
 仕様 §14 / §15 Phase 4。プロトタイプ（AHK + Python）の挙動が固まったので、
 本実装を C#/.NET へ移植する。**移植＝実質作り直し**（AHKロジックは流用不可前提）。
 
-> 状態: **コア＋GUI＋OS統合まで移植（.NET 8 / 28テスト緑・全ビルド成功・起動確認済）**。
+> 状態: **Python版にほぼ機能到達（.NET 8 / 28テスト緑・全ビルド成功・起動確認済）**。
 > Core(Sanitizer/Prompts/OllamaClient/Models/AppSettings/CorpusStore/JobService) ＋
-> Daemon(ホットキー/非破壊キャプチャ/クリップボード) ＋ WPF(状態・結果・設定ウィンドウ・トレイ常駐)。
-> 残: 通知・履歴・処理中インジケータ・パッケージング。実押下/GUI操作の確認は実機で。
+> Daemon(ホットキー/非破壊キャプチャ/クリップボード) ＋
+> WPF(状態・結果・設定ウィンドウ／トレイ常駐／通知／履歴／処理中インジケータ)。
+> 残: パッケージング、Corpus一括取込UI・プロンプト編集(Phase2細部)。実押下/GUI操作の確認は実機で。
 
 ## 構成
 
@@ -51,7 +52,9 @@ dotnet run --project TypoChecker.App
 | app/config.py | TypoChecker.Core/AppSettings.cs | ✅ 移植 |
 | app/corpus.py | TypoChecker.Core/CorpusStore.cs | ✅ 移植 |
 | app/clipboard.py | TypoChecker.Daemon/Native.cs (Win32 Clipboard) | ✅ 移植(往復確認済) |
-| app/notify.py | Windows トースト（CommunityToolkit等） | ⏳ 未 |
+| app/notify.py | TypoChecker.App/NotifyHelper.cs | ✅ 移植(PowerShellトースト) |
+| app/processing_indicator.py | TypoChecker.App/ProcessingIndicator.cs | ✅ 移植(補正中…表示) |
+| 履歴(backend.py内) | App._history + HistoryWindow.xaml | ✅ 移植(メモリ最大N/再表示) |
 | ahk/hotkeys.ahk | TypoChecker.Daemon/HotkeyLoop.cs + SelectionCapturer.cs | ✅ 移植(要実機での実押下確認) |
 | app/tray.py | TypoChecker.App/TrayIcon.cs (Win32) | ✅ 移植([X]で常駐/表示/有効無効/終了) |
 | app/result_window.py | TypoChecker.App/ResultWindow.xaml | ✅ 移植(原文/生成並列・コピー・採用Y/N) |
@@ -66,9 +69,9 @@ dotnet run --project TypoChecker.App
 3. ✅ グローバルホットキー（Win32 `RegisterHotKey`＋GetMessageループ）＝ TypoChecker.Daemon
 4. ✅ 非破壊キャプチャ（SendInput Ctrl+C ＋ クリップボード退避/復元/反映待ち §7.2）
    ※ 3・4 はビルド＆クリップボード往復確認済み。実押下の動作確認は実機で。
-5. 🟡 WPF GUI … ✅状態ウィンドウ＋結果ウィンドウ（原文/生成並列・コピー・採用Y/N）＋ホットキー配線。⏳設定画面/処理中インジケータ
-6. 🟡 トレイ常駐 ✅（[X]で常駐・表示・有効/無効・終了）／ ⏳ 通知・履歴
-7. ⏳ パッケージング（single-file publish, インストーラ）
+5. ✅ WPF GUI … 状態＋結果（原文/生成並列・コピー・採用Y/N）＋設定＋処理中インジケータ＋ホットキー配線
+6. ✅ トレイ常駐（[X]で常駐・表示・有効/無効・終了）／通知（トースト）／履歴（メモリ・再表示）
+7. ⏳ パッケージング（single-file publish, インストーラ）／ Corpus一括取込UI・プロンプト編集（Phase2の細部）
 
 ## 設計メモ
 - Core は GUI/OS非依存に保ち、ロジックはユニットテストで担保（プロトタイプのテスト資産を移植）。

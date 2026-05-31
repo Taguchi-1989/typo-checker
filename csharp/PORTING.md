@@ -3,9 +3,10 @@
 仕様 §14 / §15 Phase 4。プロトタイプ（AHK + Python）の挙動が固まったので、
 本実装を C#/.NET へ移植する。**移植＝実質作り直し**（AHKロジックは流用不可前提）。
 
-> 状態: **コアロジック移植済み・ビルド/テスト通過（.NET 8 / 15テスト緑）**。
-> Sanitizer / Prompts / OllamaClient / Models / AppSettings / CorpusStore を移植。
-> CLI は実 Ollama(qwen3:8b) で動作確認済み。GUI(WPF)・ホットキー・トレイは未着手。
+> 状態: **コア＋GUI＋OS統合まで移植（.NET 8 / 28テスト緑・全ビルド成功・起動確認済）**。
+> Core(Sanitizer/Prompts/OllamaClient/Models/AppSettings/CorpusStore/JobService) ＋
+> Daemon(ホットキー/非破壊キャプチャ/クリップボード) ＋ WPF(状態・結果・設定ウィンドウ・トレイ常駐)。
+> 残: 通知・履歴・処理中インジケータ・パッケージング。実押下/GUI操作の確認は実機で。
 
 ## 構成
 
@@ -52,7 +53,7 @@ dotnet run --project TypoChecker.App
 | app/clipboard.py | TypoChecker.Daemon/Native.cs (Win32 Clipboard) | ✅ 移植(往復確認済) |
 | app/notify.py | Windows トースト（CommunityToolkit等） | ⏳ 未 |
 | ahk/hotkeys.ahk | TypoChecker.Daemon/HotkeyLoop.cs + SelectionCapturer.cs | ✅ 移植(要実機での実押下確認) |
-| app/tray.py | NotifyIcon（WinForms相互運用 or Win32） | ⏳ 未 |
+| app/tray.py | TypoChecker.App/TrayIcon.cs (Win32) | ✅ 移植([X]で常駐/表示/有効無効/終了) |
 | app/result_window.py | TypoChecker.App/ResultWindow.xaml | ✅ 移植(原文/生成並列・コピー・採用Y/N) |
 | app/settings_window.py | TypoChecker.App/SettingsWindow.xaml | ✅ 移植(endpoint/model/temp/think/並列/上限/copy/Corpus) |
 | app/backend.py | JobService.cs + TypoChecker.App/App.xaml.cs | ✅ コア＋WPF配線(ホットキー→生成→表示) |
@@ -66,7 +67,7 @@ dotnet run --project TypoChecker.App
 4. ✅ 非破壊キャプチャ（SendInput Ctrl+C ＋ クリップボード退避/復元/反映待ち §7.2）
    ※ 3・4 はビルド＆クリップボード往復確認済み。実押下の動作確認は実機で。
 5. 🟡 WPF GUI … ✅状態ウィンドウ＋結果ウィンドウ（原文/生成並列・コピー・採用Y/N）＋ホットキー配線。⏳設定画面/処理中インジケータ
-6. ⏳ トレイ常駐（NotifyIcon）/ 通知 / 履歴
+6. 🟡 トレイ常駐 ✅（[X]で常駐・表示・有効/無効・終了）／ ⏳ 通知・履歴
 7. ⏳ パッケージング（single-file publish, インストーラ）
 
 ## 設計メモ

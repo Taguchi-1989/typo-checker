@@ -14,6 +14,8 @@ public partial class App : Application
     private JobService _service = null!;
     private HotkeyLoop _loop = null!;
     private MainWindow _main = null!;
+    private TrayIcon _tray = null!;
+    private bool _enabled = true;
 
     private void OnStartup(object sender, StartupEventArgs e)
     {
@@ -25,6 +27,25 @@ public partial class App : Application
 
         _main = new MainWindow(_settings, _client, OpenSettings);
         _main.Show();
+
+        // [X] で閉じてもトレイ常駐（§6.2）
+        _main.Closing += (s, ev) =>
+        {
+            if (_tray.Available)
+            {
+                ev.Cancel = true;
+                _main.Hide();
+            }
+        };
+
+        // タスクトレイ
+        _tray = new TrayIcon(
+            tooltip: $"文章補正ツール: {_settings.Llm.Model}",
+            onShow: () => Dispatcher.Invoke(ShowMain),
+            onToggle: () => Dispatcher.Invoke(ToggleEnabled),
+            onQuit: () => Dispatcher.Invoke(() => Shutdown()),
+            toggleLabel: () => _enabled ? "無効にする" : "有効にする");
+        _tray.Show();
 
         _loop = new HotkeyLoop();
         _loop.OnHotkey += OnHotkey;
@@ -42,6 +63,11 @@ public partial class App : Application
     // ホットキースレッドから発火 → キャプチャ即時 → UIスレッドで生成・表示
     private void OnHotkey(int id)
     {
+        if (!_enabled)
+        {
+            Dispatcher.InvokeAsync(() => _main.SetStatus("無効中です（トレイから有効化できます）"));
+            return;
+        }
         var mode = id == HotkeyLoop.IdBusiness ? CorrectionMode.Business : CorrectionMode.Typo;
         var text = SelectionCapturer.Capture();
 
@@ -109,9 +135,25 @@ public partial class App : Application
         _main.Refresh(_settings, _client);
     }
 
+    private void ShowMain()
+    {
+        _main.Show();
+        if (_main.WindowState == WindowState.Minimized) _main.WindowState = WindowState.Normal;
+        _main.Activate();
+    }
+
+    private void ToggleEnabled()
+    {
+        _enabled = !_enabled;
+        _tray.SetTooltip(_enabled
+            ? $"文章補正ツール: {_settings.Llm.Model}"
+            : "文章補正ツール（無効中）");
+        _main.SetStatus(_enabled ? "有効にしました" : "無効にしました");
+    }
+
     private void OnExit(object sender, ExitEventArgs e)
     {
-        try { _loop.Stop(); _loop.Dispose(); }
-        catch { /* ignore */ }
+        try { _loop.Stop(); _loop.Dispose(); } catch { /* ignore */ }
+        try { _tray.Stop(); } catch { /* ignore */ }
     }
 }

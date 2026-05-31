@@ -8,6 +8,7 @@ public static class Sanitizer
     private static readonly string[] PreamblePatterns =
     {
         @"^(はい[、。]?\s*)",
+        @"^(承知(いた)?しました[、。:：]?\s*)",
         @"^((修正|添削|校正)(いた)?しました[、。:：]?\s*)",
         @"^(修正(後の文|文|版|結果)?[はを]?[:：]?\s*)",
         @"^(以下が?.*?(です|になります)[:：]?\s*)",

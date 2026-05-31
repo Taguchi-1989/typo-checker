@@ -3,8 +3,9 @@
 仕様 §14 / §15 Phase 4。プロトタイプ（AHK + Python）の挙動が固まったので、
 本実装を C#/.NET へ移植する。**移植＝実質作り直し**（AHKロジックは流用不可前提）。
 
-> 状態: **着手（土台のみ）**。純ロジック（Sanitizer / Prompts / OllamaClient / Models）を
-> 移植し、CLI で動作確認できる構成まで。GUI(WPF)・ホットキー・トレイは未着手。
+> 状態: **コアロジック移植済み・ビルド/テスト通過（.NET 8 / 15テスト緑）**。
+> Sanitizer / Prompts / OllamaClient / Models / AppSettings / CorpusStore を移植。
+> CLI は実 Ollama(qwen3:8b) で動作確認済み。GUI(WPF)・ホットキー・トレイは未着手。
 
 ## 構成
 
@@ -28,7 +29,7 @@ dotnet run --project TypoChecker.Cli -- typo "なおしたいテキスト"
 echo 雑なメモ | dotnet run --project TypoChecker.Cli -- business
 ```
 
-> この環境には .NET SDK が未導入のため未ビルド。SDK 導入後に上記で検証可能。
+> 検証済み: .NET 8.0.421 で `dotnet test` 15件緑、CLI は実 Ollama(qwen3:8b) で動作確認。
 
 ## Python → C# 対応表
 
@@ -38,8 +39,8 @@ echo 雑なメモ | dotnet run --project TypoChecker.Cli -- business
 | app/prompts.py | TypoChecker.Core/Prompts.cs | ✅ 移植 |
 | app/llm.py | TypoChecker.Core/OllamaClient.cs | ✅ 移植 |
 | app/jobs.py | TypoChecker.Core/Models.cs (Job) | ✅ 移植 |
-| app/config.py | TypoChecker.Core/AppSettings.cs | ⏳ 未 |
-| app/corpus.py | TypoChecker.Core/CorpusStore.cs | ⏳ 未 |
+| app/config.py | TypoChecker.Core/AppSettings.cs | ✅ 移植 |
+| app/corpus.py | TypoChecker.Core/CorpusStore.cs | ✅ 移植 |
 | app/clipboard.py | Win32 Clipboard / System.Windows.Clipboard | ⏳ 未 |
 | app/notify.py | Windows トースト（CommunityToolkit等） | ⏳ 未 |
 | ahk/hotkeys.ahk | グローバルホットキー（RegisterHotKey/Win32） | ⏳ 未 |
@@ -51,7 +52,7 @@ echo 雑なメモ | dotnet run --project TypoChecker.Cli -- business
 ## 移植ロードマップ
 
 1. ✅ 純ロジック（Sanitizer/Prompts/OllamaClient/Models）＋テスト
-2. ⏳ AppSettings（JSON, System.Text.Json）/ CorpusStore
+2. ✅ AppSettings（JSON, System.Text.Json）/ CorpusStore ＋テスト
 3. ⏳ グローバルホットキー（Win32 `RegisterHotKey` ＋ メッセージループ。AHK代替）
 4. ⏳ 非破壊キャプチャ（SendInput Ctrl+C ＋ クリップボード退避/復元、§7.2 反映待ち）
 5. ⏳ WPF GUI（結果ウィンドウ 原文/生成文 並列、設定画面、処理中インジケータ）

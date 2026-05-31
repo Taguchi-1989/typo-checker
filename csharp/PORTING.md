@@ -54,7 +54,7 @@ dotnet run --project TypoChecker.App
 | ahk/hotkeys.ahk | TypoChecker.Daemon/HotkeyLoop.cs + SelectionCapturer.cs | ✅ 移植(要実機での実押下確認) |
 | app/tray.py | NotifyIcon（WinForms相互運用 or Win32） | ⏳ 未 |
 | app/result_window.py | TypoChecker.App/ResultWindow.xaml | ✅ 移植(原文/生成並列・コピー・採用Y/N) |
-| app/settings_window.py | WPF SettingsWindow.xaml | ⏳ 未 |
+| app/settings_window.py | TypoChecker.App/SettingsWindow.xaml | ✅ 移植(endpoint/model/temp/think/並列/上限/copy/Corpus) |
 | app/backend.py | JobService.cs + TypoChecker.App/App.xaml.cs | ✅ コア＋WPF配線(ホットキー→生成→表示) |
 
 ## 移植ロードマップ

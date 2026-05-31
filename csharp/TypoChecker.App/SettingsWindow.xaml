@@ -1,0 +1,81 @@
+<Window x:Class="TypoChecker.WpfApp.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="設定" Height="480" Width="520">
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="Ollama エンドポイント"/>
+                <TextBox x:Name="TxtEndpoint" Margin="0,2,0,8"/>
+
+                <TextBlock Text="モデル"/>
+                <DockPanel Margin="0,2,0,8">
+                    <Button DockPanel.Dock="Right" Content="一覧取得/接続テスト" Click="OnFetchModels" Padding="8,2" Margin="6,0,0,0"/>
+                    <ComboBox x:Name="CmbModel" IsEditable="True"/>
+                </DockPanel>
+                <TextBlock x:Name="LblConn" Foreground="Gray" Margin="0,0,0,8"/>
+
+                <CheckBox x:Name="ChkThink" Content="思考(thinking)を無効化する（Qwen3等で高速化）" Margin="0,0,0,8"/>
+
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                        <TextBlock Text="temperature (business)"/>
+                        <TextBox x:Name="TxtTempB"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                        <TextBlock Text="temperature (typo)"/>
+                        <TextBox x:Name="TxtTempT"/>
+                    </StackPanel>
+                </Grid>
+
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                        <TextBlock Text="最大文字数"/>
+                        <TextBox x:Name="TxtMaxChars"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                        <TextBlock Text="並列実行数"/>
+                        <TextBox x:Name="TxtMaxParallel"/>
+                    </StackPanel>
+                </Grid>
+
+                <CheckBox x:Name="ChkCopy" Content="完了時に自動でクリップボードへコピー" Margin="0,0,0,8"/>
+
+                <Separator Margin="0,4,0,8"/>
+                <TextBlock Text="Corpus（用例 few-shot 注入）" FontWeight="Bold"/>
+                <CheckBox x:Name="ChkCorpus" Content="Corpus を有効化" Margin="0,4,0,8"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                        <TextBlock Text="注入件数"/>
+                        <TextBox x:Name="TxtFewshot"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                        <TextBlock Text="最大保持件数"/>
+                        <TextBox x:Name="TxtCorpusMax"/>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="保存して適用" Click="OnSave" Padding="12,4"/>
+            <Button Content="閉じる" Click="OnClose" Padding="12,4" Margin="8,0,0,0"/>
+        </StackPanel>
+    </Grid>
+</Window>

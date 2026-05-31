@@ -12,6 +12,7 @@ internal class StubOllama : IOllamaClient
     public int MaxConcurrent;
 
     public Task<bool> CheckConnectionAsync(CancellationToken ct = default) => Task.FromResult(true);
+    public Task<List<string>> ListModelsAsync(CancellationToken ct = default) => Task.FromResult(new List<string>());
 
     public async Task<string> GenerateAsync(string model, string prompt, double temperature,
         bool? think = false, CancellationToken ct = default)

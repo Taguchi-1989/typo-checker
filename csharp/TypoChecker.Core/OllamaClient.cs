@@ -9,6 +9,7 @@ public interface IOllamaClient
     Task<string> GenerateAsync(string model, string prompt, double temperature,
         bool? think = false, CancellationToken ct = default);
     Task<bool> CheckConnectionAsync(CancellationToken ct = default);
+    Task<List<string>> ListModelsAsync(CancellationToken ct = default);
 }
 
 /// <summary>Ollama クライアント（Python版 app/llm.py の移植）。think 制御対応。</summary>
@@ -59,5 +60,29 @@ public class OllamaClient : IOllamaClient
         {
             return false;
         }
+    }
+
+    /// <summary>インストール済みモデル名一覧（設定画面用）。失敗時は空。</summary>
+    public async Task<List<string>> ListModelsAsync(CancellationToken ct = default)
+    {
+        var names = new List<string>();
+        try
+        {
+            using var resp = await _http.GetAsync($"{_endpoint}/api/tags", ct);
+            resp.EnsureSuccessStatusCode();
+            var body = await resp.Content.ReadAsStringAsync(ct);
+            using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("models", out var models))
+            {
+                foreach (var m in models.EnumerateArray())
+                    if (m.TryGetProperty("name", out var n) && n.GetString() is { } s)
+                        names.Add(s);
+            }
+        }
+        catch
+        {
+            // 接続不可等は空リスト
+        }
+        return names;
     }
 }

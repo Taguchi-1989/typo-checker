@@ -6,17 +6,29 @@ namespace TypoChecker.WpfApp;
 
 public partial class MainWindow : Window
 {
-    private readonly OllamaClient _client;
+    private OllamaClient _client;
+    private readonly Action _onOpenSettings;
 
-    public MainWindow(AppSettings settings, OllamaClient client)
+    public MainWindow(AppSettings settings, OllamaClient client, Action onOpenSettings)
     {
         InitializeComponent();
         _client = client;
+        _onOpenSettings = onOpenSettings;
         LblModel.Text = $"モデル: {settings.Llm.Model}";
         Loaded += async (_, _) => await RefreshConnAsync();
     }
 
     public void SetStatus(string text) => LblStatus.Text = text;
+
+    /// <summary>設定適用後にモデル表示・接続先クライアントを更新。</summary>
+    public async void Refresh(AppSettings settings, OllamaClient client)
+    {
+        _client = client;
+        LblModel.Text = $"モデル: {settings.Llm.Model}";
+        await RefreshConnAsync();
+    }
+
+    private void OnSettings(object sender, RoutedEventArgs e) => _onOpenSettings();
 
     private async Task RefreshConnAsync()
     {

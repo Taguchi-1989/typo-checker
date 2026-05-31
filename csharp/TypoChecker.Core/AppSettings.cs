@@ -27,9 +27,20 @@ public class SanitizeSettings
 
 public class AppSettings
 {
+    /// <summary>§8.2 モデル候補（設定画面のドロップダウン用）。</summary>
+    public static readonly string[] ModelCandidates =
+    {
+        "qwen3:8b",
+        "qwen2.5:7b-instruct",
+        "gemma2:9b-instruct-q4_K_M",
+        "gemma3:4b",
+        "qwen2.5:3b-instruct-q4_K_M",
+    };
+
     public LlmSettings Llm { get; set; } = new();
     public SanitizeSettings Sanitize { get; set; } = new();
     public int MaxChars { get; set; } = 3000;
+    public bool CopyResultOnComplete { get; set; } = true; // §7.3
     public bool CorpusEnabled { get; set; } = false;
     public int CorpusMaxItems { get; set; } = 200;
     public int CorpusFewshotCount { get; set; } = 3;

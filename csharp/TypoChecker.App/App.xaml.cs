@@ -23,7 +23,7 @@ public partial class App : Application
         _corpus = new CorpusStore(Path.Combine(baseDir, "corpus.json"));
         _service = new JobService(_settings, _client, _corpus);
 
-        _main = new MainWindow(_settings, _client);
+        _main = new MainWindow(_settings, _client, OpenSettings);
         _main.Show();
 
         _loop = new HotkeyLoop();
@@ -57,8 +57,15 @@ public partial class App : Application
 
             if (job.Status == "done")
             {
-                TrySetClipboard(job.ResultText ?? "");
-                _main.SetStatus($"完了 [{mode.Label()}]（クリップボードにコピー）");
+                if (_settings.CopyResultOnComplete)
+                {
+                    TrySetClipboard(job.ResultText ?? "");
+                    _main.SetStatus($"完了 [{mode.Label()}]（クリップボードにコピー）");
+                }
+                else
+                {
+                    _main.SetStatus($"完了 [{mode.Label()}]（コピーは結果ウィンドウから）");
+                }
             }
             else
             {
@@ -85,6 +92,21 @@ public partial class App : Application
     {
         try { Clipboard.SetText(text ?? ""); }
         catch { /* クリップボードが他プロセスにロックされている等は無視 */ }
+    }
+
+    private void OpenSettings()
+    {
+        var win = new SettingsWindow(_settings, _client, ApplySettings) { Owner = _main };
+        win.ShowDialog();
+    }
+
+    // 設定保存後: エンドポイント/並列数を反映するためクライアントとサービスを作り直す
+    private void ApplySettings()
+    {
+        _settings.Save(Path.Combine(AppContext.BaseDirectory, "settings.json"));
+        _client = new OllamaClient(_settings.Llm.Endpoint);
+        _service = new JobService(_settings, _client, _corpus);
+        _main.Refresh(_settings, _client);
     }
 
     private void OnExit(object sender, ExitEventArgs e)

@@ -7,8 +7,9 @@ namespace TypoChecker.Core;
 /// <summary>設定（Python版 app/config.py 相当）。System.Text.Json で読み書き。</summary>
 public class LlmSettings
 {
-    public string Endpoint { get; set; } = "http://localhost:11434";
-    public string Model { get; set; } = "qwen3:8b";
+    // localhost は Windows で IPv6(::1) 優先解決→Ollama(IPv4)と食い違い接続拒否の恐れ。127.0.0.1 を既定に。
+    public string Endpoint { get; set; } = "http://127.0.0.1:11434";
+    public string Model { get; set; } = "qwen3.5-jp-4b:q6";
     public double TemperatureBusiness { get; set; } = 0.3;
     public double TemperatureTypo { get; set; } = 0.2;
     public bool? Think { get; set; } = false;
@@ -27,14 +28,13 @@ public class SanitizeSettings
 
 public class AppSettings
 {
-    /// <summary>§8.2 モデル候補（設定画面のドロップダウン用）。</summary>
+    /// <summary>§8.2 モデル候補（設定画面のドロップダウン用）。RTX 3060 / 6GB 向け、4B以下中心。</summary>
     public static readonly string[] ModelCandidates =
     {
-        "qwen3:8b",
-        "qwen2.5:7b-instruct",
-        "gemma2:9b-instruct-q4_K_M",
-        "gemma3:4b",
-        "qwen2.5:3b-instruct-q4_K_M",
+        "qwen3.5-jp-4b:q6",   // dahara1 日本語特化 Qwen3.5-4B(Q6_K, ~3.8GB)。think=falseで高速・補正力◎
+        "qwen3.5:4b",         // 素のQwen3.5-4B(~3.4GB)。多言語・汎用
+        "qwen3.5:2b",         // さらに軽量・最速(~2.7GB)。タイポ用途の退避先
+        "gemma4:e2b",         // Gemma4系。日本語の自然さ高(6GBではVRAM要確認)
     };
 
     public LlmSettings Llm { get; set; } = new();

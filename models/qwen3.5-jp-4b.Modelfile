@@ -1,0 +1,25 @@
+# 日本語特化 Qwen3.5-4B を Ollama に「正しく」取り込むための Modelfile
+# 対象: RTX 3060 / VRAM 6GB（本体3.8GB・100% GPU常駐・think:false で warm 1秒前後）
+#
+# 作成手順:
+#   1) ベースGGUFを取得（dahara1氏の日本語imatrix版・Q6_K ~3.5GB）
+#        ollama pull hf.co/dahara1/Qwen3.5-4B-UD-japanese-imatrix:Q6_K
+#   2) このModelfileで作成（settings.json の llm.model と同名）
+#        ollama create qwen3.5-jp-4b:q6 -f models/qwen3.5-jp-4b.Modelfile
+#
+# ★なぜ Modelfile が要るか（重要）:
+#   HF GGUF を `ollama pull/cp` で直接取り込むと、Ollama(0.30.x)は qwen35 アーキの
+#   TEMPLATE を抽出できず `{{ .Prompt }}`（素通し）になり、チャット書式・停止トークン・
+#   思考制御(think)が一切効かなくなる。結果、think:false でもモデルが停止できず
+#   コンテキスト上限(約3880トークン)まで思考を垂れ流し、1補正に約57秒かかる。
+#   公式 qwen3.5 と同じ `RENDERER qwen3.5` / `PARSER qwen3.5` を付与すると、
+#   ネイティブのレンダラ/パーサがチャット書式・停止・思考分離を担い、正常化する。
+
+FROM hf.co/dahara1/Qwen3.5-4B-UD-japanese-imatrix:Q6_K
+TEMPLATE """{{ .Prompt }}"""
+RENDERER qwen3.5
+PARSER qwen3.5
+PARAMETER top_k 20
+PARAMETER top_p 0.95
+PARAMETER presence_penalty 1.5
+PARAMETER temperature 1

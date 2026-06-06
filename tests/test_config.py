@@ -30,7 +30,7 @@ def main():
         assert os.path.exists(config.SETTINGS_PATH), "既定値が書き出されない"
         assert s["server"]["port"] == 8765
         # Phase 0/3 で更新した既定値
-        assert s["llm"]["model"] == "qwen3:8b", s["llm"]["model"]
+        assert s["llm"]["model"] == "qwen3.5-jp-4b:q6", s["llm"]["model"]
         assert s["llm"]["think"] is False
         assert s["llm"]["max_parallel"] == 2
         assert s["llm"]["temperature"]["business"] == 0.3
@@ -43,7 +43,7 @@ def main():
             json.dump(partial, f)
         s = config.load_settings()
         assert s["llm"]["model"] == "custom:1b", s["llm"]["model"]
-        assert s["llm"]["endpoint"] == "http://localhost:11434", "欠落が既定補完されない"
+        assert s["llm"]["endpoint"] == "http://127.0.0.1:11434", "欠落が既定補完されない"
         assert s["max_chars"] == 500
         assert s["clipboard"]["capture_timeout_ms"] == 1000, "ネスト既定が消えた"
         print("OK ディープマージ")

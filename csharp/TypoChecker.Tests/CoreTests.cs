@@ -55,7 +55,7 @@ public class SettingsTests
         try
         {
             var s = AppSettings.Load(tmp);
-            Assert.Equal("qwen3:8b", s.Llm.Model);
+            Assert.Equal("qwen3.5-jp-4b:q6", s.Llm.Model);
             Assert.Equal(0.3, s.Llm.TemperatureBusiness);
             Assert.False(s.Llm.Think);
             Assert.True(File.Exists(tmp));
@@ -72,7 +72,7 @@ public class SettingsTests
             File.WriteAllText(tmp, "{\"maxChars\":500}");
             var s = AppSettings.Load(tmp);
             Assert.Equal(500, s.MaxChars);
-            Assert.Equal("qwen3:8b", s.Llm.Model); // 欠落キーは既定
+            Assert.Equal("qwen3.5-jp-4b:q6", s.Llm.Model); // 欠落キーは既定
         }
         finally { if (File.Exists(tmp)) File.Delete(tmp); }
     }

@@ -267,9 +267,9 @@ LLM停止中でもツールは起動可。未接続状態を表示。
   "hotkeys": { "business": "Ctrl+Alt+B", "typo": "Ctrl+Alt+T" },
   "llm": {
     "provider": "ollama",
-    "endpoint": "http://localhost:11434",
-    "model": "qwen2.5:7b-instruct-q4_K_M",
-    "temperature": { "business": 0.4, "typo": 0.2 }
+    "endpoint": "http://127.0.0.1:11434",
+    "model": "qwen3.5-jp-4b:q6",
+    "temperature": { "business": 0.3, "typo": 0.2 }
   },
   "clipboard": {
     "copy_result_on_complete": true,

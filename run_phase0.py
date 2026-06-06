@@ -11,13 +11,15 @@ Phase 0 品質検証ハーネス
   - §8.2 モデル候補比較    -> --model で切替、結果はモデル別に保存
 
 使い方:
-  1) Ollama を起動し、対象モデルを pull しておく
-       ollama pull qwen2.5:7b-instruct-q4_K_M
+  1) Ollama を起動し、対象モデルを pull しておく（RTX 3060 / 6GB 向け 4B以下中心）
+       ollama pull hf.co/dahara1/Qwen3.5-4B-UD-japanese-imatrix:Q6_K
+       ollama create qwen3.5-jp-4b:q6 -f models/qwen3.5-jp-4b.Modelfile
+       # ↑ RENDERER/PARSER qwen3.5 が必須。直 pull/cp だと思考暴走で激遅（理由はModelfile参照）
   2) 生成を回す（人手判定はあとで）
-       python run_phase0.py --model qwen2.5:7b-instruct-q4_K_M
+       python run_phase0.py --model qwen3.5-jp-4b:q6
   3) 別モデルでも回して比較
-       python run_phase0.py --model gemma2:9b-instruct-q4_K_M
-       python run_phase0.py --model gemma3:4b
+       python run_phase0.py --model qwen3.5:4b
+       python run_phase0.py --model gemma4:e2b
   4) オーナーが実文章を10件ほど追加する場合:
        data/dummy_inputs.json の "typo"/"business" 配列に項目を足すだけ
   5) Y/N判定（意味保存できているか）:
@@ -271,9 +273,9 @@ def summarize(blob: dict):
 
 def main():
     ap = argparse.ArgumentParser(description="Phase 0 品質検証ハーネス")
-    ap.add_argument("--model", default="qwen2.5:7b-instruct-q4_K_M",
+    ap.add_argument("--model", default="qwen3.5-jp-4b:q6",
                     help="Ollama モデル名")
-    ap.add_argument("--endpoint", default="http://localhost:11434",
+    ap.add_argument("--endpoint", default="http://127.0.0.1:11434",
                     help="Ollama エンドポイント")
     ap.add_argument("--judge", metavar="RESULT_JSON",
                     help="生成済み結果ファイルを読み込み、Y/N判定を行う")

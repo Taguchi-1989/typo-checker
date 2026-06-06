@@ -23,6 +23,6 @@ if (!await client.CheckConnectionAsync())
 
 var prompt = Prompts.BuildPrompt(mode, text);
 var temperature = mode == CorrectionMode.Business ? 0.3 : 0.2;
-var raw = await client.GenerateAsync("qwen3:8b", prompt, temperature, think: false);
+var raw = await client.GenerateAsync("qwen3.5-jp-4b:q6", prompt, temperature, think: false);
 Console.WriteLine(Sanitizer.Sanitize(raw));
 return 0;

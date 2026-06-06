@@ -18,7 +18,7 @@ public class OllamaClient : IOllamaClient
     private readonly HttpClient _http;
     private readonly string _endpoint;
 
-    public OllamaClient(string endpoint = "http://localhost:11434", HttpClient? http = null)
+    public OllamaClient(string endpoint = "http://127.0.0.1:11434", HttpClient? http = null)
     {
         _endpoint = endpoint.TrimEnd('/');
         _http = http ?? new HttpClient { Timeout = TimeSpan.FromSeconds(120) };

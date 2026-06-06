@@ -164,6 +164,8 @@ class Backend:
             notify.notify("文字数超過",
                           f"{self.settings['max_chars']}字までです（{len(text)}字）")
             return
+        # 新しい補正指示が来たら、前回までの結果ウィンドウを閉じる（画面に溜めない §6.1）
+        self._close_result_windows()
         # 並列上限まで実行、超過分はキュー待ち（§Phase 3）
         self._pending.append(job)
         self._start_indicator()  # 画面に「補正中…」を即時表示
@@ -254,6 +256,15 @@ class Backend:
                            on_accept=self._on_accept)
         self._result_windows[job.job_id] = win
         return win
+
+    def _close_result_windows(self):
+        """既存の結果ウィンドウをすべて閉じてクリアする（次の補正指示が来たときに呼ぶ）。"""
+        for win in list(self._result_windows.values()):
+            try:
+                win.close()
+            except Exception:  # noqa: BLE001
+                pass
+        self._result_windows.clear()
 
     # --- 履歴（メモリのみ §11.3 / Phase 3） --------------------------------
     def _record_history(self, job):

@@ -96,3 +96,10 @@ class ResultWindow:
         self.win.deiconify()
         self.win.lift()
         self.win.focus_force()
+
+    def close(self):
+        """ウィンドウを破棄する（次の補正指示で前回分を閉じる用）。多重呼び出し安全。"""
+        try:
+            self.win.destroy()
+        except Exception:  # noqa: BLE001
+            pass
